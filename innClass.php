@@ -184,7 +184,19 @@ public function saveReservations() {
 		return FALSE; // raise error ?
 }
 
+// this maay need some work.
 public function readReservations() {
+	$this->reservations = array();
+	if ($jsonData = file_get_contents(Reservation::DataFile) ) {
+		$reslist = json_decode($jsonData, true);	// an array of objects
+		foreach ($reslist as $r) { // build obj list
+			$res = new Reservation($r);
+			array_push($this->reservations, $res);
+		}
+		return TRUE;
+	}
+	else
+		return FALSE; // raise error ?
 }
 
 
