@@ -15,13 +15,13 @@ $request = explode("/", substr(@$_SERVER['PATH_INFO'], 1));
 
 switch ($method) {
   case 'GET':
-    process_gets($request);  
+    process_gets($request);
     break;
   case 'POST':
-    process_posts($request);  
+    process_posts($request);
     break;
   default:
-    unsupported($request);  
+    unsupported($request);
     break;
 }
 
@@ -45,9 +45,9 @@ function process_gets($request) {
  		echo json_encode(array("message" => "Missing action in URI (request or confirm)"));
 		return 0;
 	}
-	elseif ($action != "request" && $action != "confirm") {
+	elseif (! in_array($action, ["request", "confirm", "cleaning"]) ) {
 		http_response_code(400);
-		echo json_encode(array("message" => "Invalid action in URI (expecting request, confirm)"));
+		echo json_encode(array("message" => "Invalid action in URI (expecting request, confirm, cleaning)"));
 		return 0;
 	}
 	else
@@ -103,6 +103,16 @@ function process_gets($request) {
 //			return 0;
 		}
 	}
+	elseif ($action == 'cleaning') {
+		$inn = new Inn;
+		$time = $inn->cleaningTime();
+		$response['cleaningTime'] = $time / 60;
+		$response['message'] = "It will take ". $time / 60 ." hours to clean the inn tomorrow. ";
+		if ($inn->cleaningFinish())
+			$response['message'] .= "This is enough time to clean all the rooms.";
+		else
+			$response['message'] .= "This is not enough time to clean all the rooms!";
+	}
 	
 	echo json_encode($response);
 	return 1;
@@ -155,9 +165,22 @@ function process_posts($request) {
 			http_response_code(409); // maybe a bad room number, or room is booked
 			$response['message'] = "That room is not available. Please check for current availability.";
 		}
+		echo json_encode($response);
+		return 1;
 	}
-	
-	echo json_encode($response);
+
+	elseif ($action == "clear") {
+		if (empty($data['admin'])) {
+			http_response_code(400);
+			echo json_encode(array("message" => "Invalid action in URI POST (expecting reserve)"));
+			return 0;
+		}
+		$inn = new Inn;
+		$inn->clear();
+		$response = array("message" => "Inn reservations cleared.");
+		echo json_encode($response);
+	}
+
 	return 1;
 }
 

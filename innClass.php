@@ -32,24 +32,24 @@ class Inn {
 	public $reservations = array();  // for tonight and tomorrow
 	public $roomRate = 20;
 	public $storageRate = 2;
-	
+
 	public $totalBookings = 0;
 	protected $maxGuests = 0;
-	
+
 	// Some useful state conditions
 	public $state = FALSE;
-	protected $vacancy = array('tonight' => TRUE, 'tmrw' => TRUE); 
+	protected $vacancy = array('tonight' => TRUE, 'tmrw' => TRUE);
 	protected $cleaning = FALSE; // today
 	protected $checkout = FALSE;
 	protected $mutex = FALSE;
 
-public function __construct() {
+public function __construct(boolean $load = TRUE) {
 	$debug = 0;
 	$jsonData = file_get_contents(Room::DataFile);
-	if ($debug) var_dump($jsonData); 
+	if ($debug) var_dump($jsonData);
 	//print "<br/><br/>";
 	$array = json_decode($jsonData, true);
-	if ($debug) var_dump($array); 
+	if ($debug) var_dump($array);
 
 	$this->numRooms = count($array);
 	$this->maxGuests = 0;
@@ -71,16 +71,31 @@ public function __construct() {
 
 		$this->rooms[$n] = new Room($data);
 		// fill in default room night data
+		$data['night'] = 'tonight';
 		$this->roomNights["tonight"][$n] = new RoomNight($data);
+		$data['night'] = 'tmrw';
 		$this->roomNights["tmrw"][$n]    = new RoomNight($data);
 	}
+	if ($load) {
+		$this->readReservations();
+		$this->readRoomNights();
+	}
+}
+
+// Just in case something goes wrong and need to start again
+// Also useful for testing
+public function clear () {
+	$this = new Inn(FALSE);
+	$this->vacancy = array('tonight' => TRUE, 'tmrw' => TRUE);
+	$this->saveReservations();
+	$this->saveRoomNights();
 }
 
 // Returns room number, or 0 if no room available for the reservation req
 public function availableRoom(int $guests, int $bags, string $night="tonight") {
 	if ($guests > $this->maxGuests)
 		return 0;
-	if (! $this->vacancy[$night]) 
+	if (! $this->vacancy[$night])
 		return 0;
 
 	$room = 0;
@@ -104,14 +119,17 @@ public function bookRoom(array $res) {
 		return FALSE;
 	if ($res['guests'] > $this->maxGuests)
 		return FALSE;
-	
-	// Determine vacancy
+
+	// Determine vacancy and availability
 	// Stuff can happen b/t availability and booking
 	if (! $this->vacancy[$res['night']] )
 		return FALSE;
 	// Set mutex?
 	$rmNight = $this->roomNights[$res['night']][$res['room']];
 	if (! $rmNight->bookable($res['guests'], $res['bags']) )
+		return FALSE;
+	// A check for all the rooms being cleaned (but in this case it is always true)
+	if ($res['night'] == 'tmrw' && ! $this->cleaningFinish())
 		return FALSE;
 
 	// Book the room, figure out cost per guest, and store it
@@ -140,7 +158,7 @@ public function isRoomAvailable(int $room, string $night) { // do I need rest of
 public function confirmReservation(array $res) { // could be reservation object
 	if ($res['room'] > $this->numRooms)
 		return FALSE;
-	// find this in the reservations list. 
+	// find this in the reservations list.
 	foreach ($this->reservations as $reservation) {
 		if ($reservation->find($res) )
 			return $reservation;
@@ -172,8 +190,15 @@ public function calculateBilling(string $night="tonight") {
 	return $total;
 }
 
+
 public function cleaningTime() {
+	return GnomeSquad::totalCleaningTime($this->roomNights['tonight']);
 }
+
+public function cleaningFinish() {
+	return GnomeSquad::finishAllRooms($this->roomNights['tonight']);
+}
+
 
 // Reservation and RoomNight utility operations
 

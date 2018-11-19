@@ -29,16 +29,14 @@ include "roomClass.php";
  */
 
  // This is the state of the room for a given night
- // Includes how occupied the room is, whether it can be shared with a following reservation
+ // Includes how occupied the room is
 class RoomNight extends Room {
+	public $night = '';
 	public $guests = 0;
 	public $bags = 0;
 	
 	public $totalCharge = 0;
 
-	public $checkin = '';
-	public $checkout = '';
-	
 	// Some useful state conditions
 	public $state = FALSE;
 	protected $full = FALSE;
