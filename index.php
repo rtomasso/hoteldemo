@@ -78,30 +78,30 @@ function process_gets($request) {
 			echo json_encode($_GET); // debug
 		return 1;
 	}
-	elseif ($action == "confirm") {
+	elseif ($action == 'confirm') {
 		if (! Reservation::validate($_GET, ['room','name']) ) {
 			$response['message'] = "Required arguments for request are room and guest name";
 			echo json_encode($response);
 			return 0;
 		} else {
-			echo json_encode($_GET); // debugging
-			return 0;
+//			echo json_encode($_GET); // debugging
 		}
 		
+		$_GET['night'] = isset($_GET['night']) ? $_GET['night'] : 'tonight';
 		$inn = new Inn;
 		$conf = $inn->confirmReservation($_GET);
 		if (is_bool($conf)) {
 			http_response_code(400); // 404?
 			$response['message'] = "No matching reservation found :(";
-			echo json_encode($response);
-			return 0;
+//			echo json_encode($response);
+//			return 0;
 		} else {
 			$response['message'] = "Matching reservation found!";
 			$response['reservation'] = $conf; // optional?
 			$response['get'] = $_GET;
-			echo json_encode($response);
+//			echo json_encode($response);
+//			return 0;
 		}
-		return 1;
 	}
 	
 	echo json_encode($response);
