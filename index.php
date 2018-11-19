@@ -32,7 +32,7 @@ switch ($method) {
 function process_gets($request) {
 
 	if (empty($_GET)) {
-		echo json_encode(array("message" => "Inn reservations expect arguments of action (request or confirm). ".
+		echo json_encode(array("message" => "Inn reservations expect parameters of action (request or confirm). ".
 			"Requests also requires guests and bags and optional night. ".
 			"Confirm needs a name and room number and optional night."));
 		return 1;
@@ -57,7 +57,7 @@ function process_gets($request) {
 	if ($action == "request") {
 		if (! Reservation::validate($_GET, ['guests','bags']) ) {
 			http_response_code(400);
-			$response['message'] = "Required arguments for request are guests and bags";
+			$response['message'] = "Required parameters for request are guests and bags";
 			$response['data'] = $_GET; // debug
 			echo json_encode($response);
 			return 0;
@@ -80,7 +80,7 @@ function process_gets($request) {
 	}
 	elseif ($action == 'confirm') {
 		if (! Reservation::validate($_GET, ['room','name']) ) {
-			$response['message'] = "Required arguments for request are room and guest name";
+			$response['message'] = "Required parameters for request are room and guest name";
 			echo json_encode($response);
 			return 0;
 		} else {
@@ -113,7 +113,7 @@ function process_posts($request) {
 	$data = json_decode(file_get_contents("php://input"),1	);
 	//var_dump($data);
 	if (empty($data)) {
-		echo json_encode(array("message" => "Inn reservations expect arguments of action (reserve). ".
+		echo json_encode(array("message" => "Inn reservations expect parameters of action (reserve). ".
 										"Reserve requires room, name, guests and bags and optional night.") );
 		return 1;
 	}
@@ -131,7 +131,7 @@ function process_posts($request) {
 		// validate input
 		if (! Reservation::validate($data, ['guests','bags','name','room']) ) {
 			http_response_code(400);
-			$response['message'] = "Required arguments for reservation action are room, name, guests and bags";
+			$response['message'] = "Required parameters for reservation action are room, name, guests and bags";
 			echo json_encode($response);
 			return 0;
 		}
@@ -143,16 +143,17 @@ function process_posts($request) {
 			$res = $inn->bookRoom($data);
 			if ($res) {
 				http_response_code(201); // or 202
-				$response['message'] = "Room $res->room has been reserved!";
+				$response['message'] = "Room $res->room has been reserved by $res->name for $res->guests guests and $res->bags bags.";
 				$response['reservation'] = $res;
 			}
 			else {
+				// later may want to refine why the reservation failed
 				http_response_code(409); // conflict with current reserverations
-				$response['message'] = "Reservation not completed. Please check for vacancy.";				
+				$response['message'] = "Reservation not completed. Please check for current availability.";
 			}
 		} else {
-			http_response_code(409); // a bad room number
-			$response['message'] = "That room is not available.";				
+			http_response_code(409); // maybe a bad room number, or room is booked
+			$response['message'] = "That room is not available. Please check for current availability.";
 		}
 	}
 	
