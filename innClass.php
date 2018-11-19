@@ -6,11 +6,11 @@ include_once "gnomeSquadClass.php";
 
 /* the Inn, plus some operations.
  	array of Rooms
+ 	array of RoomNights
 	array of Reservations
 	default room rate
 	default storage rate
 	mutex
-	what's available now()
 	what's available tonight()
 	what's available for date()
 	is room x available()
@@ -63,6 +63,7 @@ public function __construct() {
 			$data['roomRate'] = $this->roomRate;
 		if (empty($data['storageRate']))
 			$data['storageRate'] = $this->storageRate;
+
 		if (empty($data['number']))
 			$data['number'] = $n;
 		if ($data['beds'] > $this->maxGuests)
@@ -75,6 +76,7 @@ public function __construct() {
 	}
 }
 
+// Returns room number, or 0 if no room available for the reservation req
 public function availableRoom(int $guests, int $bags, string $night="tonight") {
 	if ($guests > $this->maxGuests)
 		return 0;
@@ -111,13 +113,14 @@ public function bookRoom(array $res) {
 	$rmNight = $this->roomNights[$res['night']][$res['room']];
 	if (! $rmNight->bookable($res['guests'], $res['bags']) )
 		return FALSE;
-	// book the room
-	// figure out cost per guest
+	// book the room, figure out cost per guest
 	$rmNight->reserve($res['guests'], $res['bags']);
 	$res['totalCharge'] = $rmNight->costPerGuest();
 	$res = new Reservation($res);
 	array_push($this->reservations, $res);
+	// gotta save this so we can check it next request or confirm
 	$this->saveReservations();
+	$this->saveRoomNights();
 
 	return $res;
 }
@@ -146,13 +149,13 @@ public function confirmReservation(array $res) { // could be reservation object
 // protected?
 public function computeVacancy() {
 	$vac = FALSE;
-	foreach ($rooms['tonight'] as $rm) {
+	foreach ($this->roomNights['tonight'] as $rm) {
 		if (! $rm->full)
 			$vac = TRUE;
 	}
 	$this->vacancy['tonight'] = $vac;
 	$vac = FALSE;
-	foreach ($rooms['tmrw'] as $rm) {
+	foreach ($this->roomNights['tmrw'] as $rm) {
 		if (! $rm->full )
 			$vac = TRUE;
 	}
@@ -170,7 +173,7 @@ public function calculateBilling(string $night="tonight") {
 public function cleaningTime() {
 }
 
-// Reservation utility operations
+// Reservation and RoomNight utility operations
 
 // must be done after rooms are configued
 public function applyReservations() {
@@ -192,6 +195,30 @@ public function readReservations() {
 		foreach ($reslist as $r) { // build obj list
 			$res = new Reservation($r);
 			array_push($this->reservations, $res);
+		}
+		return TRUE;
+	}
+	else
+		return FALSE; // raise error ?
+}
+
+
+public function saveRoomNights() {
+	$data = json_encode($this->roomNights); //?
+	if (file_put_contents(RoomNight::DataFile, $data, LOCK_EX) )
+		return TRUE;
+	else
+		return FALSE; // raise error ?
+}
+
+// This will overwrite any existing RNs
+public function readRoomNights() {
+	if ($jsonData = file_get_contents(RoomNight::DataFile) ) {
+		$data = json_decode($jsonData, true);	// an array of objects
+		foreach ($data as $night => $roomlist) { // build obj list
+			foreach ($roomlist as $num => $rm) {
+				$this->roomNights[$night][$num] = new RoomNight($rm);
+			}
 		}
 		return TRUE;
 	}
