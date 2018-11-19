@@ -95,7 +95,7 @@ public function availableRoom(int $guests, int $bags, string $night="tonight") {
 
 // wants a reservation array or object
 public function bookRoom(array $res) {
-	// validate reservation
+	// Validate reservation
 	if (empty($res['night']))
 		$res['night'] = 'tonight';
 	if (!Reservation::validate($res, ['guests','room','name','bags','night']) )
@@ -105,20 +105,22 @@ public function bookRoom(array $res) {
 	if ($res['guests'] > $this->maxGuests)
 		return FALSE;
 	
-	// determine vacancy
-	// stuff can happen b/t availability an dbooking
+	// Determine vacancy
+	// Stuff can happen b/t availability and booking
 	if (! $this->vacancy[$res['night']] )
 		return FALSE;
-	// set mutex?
+	// Set mutex?
 	$rmNight = $this->roomNights[$res['night']][$res['room']];
 	if (! $rmNight->bookable($res['guests'], $res['bags']) )
 		return FALSE;
-	// book the room, figure out cost per guest
+
+	// Book the room, figure out cost per guest, and store it
 	$rmNight->reserve($res['guests'], $res['bags']);
 	$res['totalCharge'] = $rmNight->costPerGuest();
 	$res = new Reservation($res);
 	array_push($this->reservations, $res);
-	// gotta save this so we can check it next request or confirm
+
+	// Gotta save this so we can check it next request or confirm
 	$this->saveReservations();
 	$this->saveRoomNights();
 

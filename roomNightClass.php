@@ -47,12 +47,14 @@ class RoomNight extends Room {
 	protected $mutex = FALSE;
 
 function __construct(array $in) {
-	// parent::__construct($in);	// fails with an error!!!
-	$keys = ['number','beds','storage','roomRate','storageRate','guests','bags','night'];
+	parent::__construct($in);	// this was failing with an error, now it's fine. weird.
+	$keys = ['guests','bags','night'];
 	foreach ($keys as $k) {
 		if (isset($in[$k]) )
 			$this->$k = $in[$k];
 	}
+	if ($this->guests == $this->beds)
+		$this->full = TRUE;
 	// do i need to worry about setting the other states
 }
 
@@ -70,13 +72,15 @@ public function bookable(int $guests = 0, int $bags = 0) {
 	return TRUE;
 }
 
-// assumes a valid reservation
+// Assumes a validated reservation and available space
 public function reserve(int $guests = 0, int $bags = 0) { // $reservation ?
 	$this->guests += $guests;
-	$this->bags += $bags;
-	$this->full = ($this->guests == $this->beds);
-	if ($this->guests) $this->reserved = TRUE;
-	else $this->reserved = FALSE;
+	$this->bags   += $bags;
+	$this->full   = ($this->guests == $this->beds);
+	if ($this->guests)
+		$this->reserved = TRUE;
+	else
+		$this->reserved = FALSE;
 
 	return $this->reserved; // ?
 }
