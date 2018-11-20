@@ -37,6 +37,8 @@ POST actions that do something return a 2xx code. POST actions that don't work w
 
 In all cases the 'night' parameter defaults to 'tonight'. The other valid value is 'tmrw' (for tomorrow night). If you want to reference something for tomorrow night, you will need to specify the night parameter.
 
+If a request fails, the API will return a message that may help the user make a better request next time. 
+
 *Back End*
 
 All the interaction with the API is done through the Inn class. There are other classes to handle the rooms, reservations and the cleaning gnomes. The current state of the Inn is stored in local json files. Every new reservation updates these files.
@@ -45,7 +47,7 @@ The Inn is a container of Rooms. These Rooms may be reserved for a given night b
 
 When a reservation request is made, the list of available rooms for that night are checked, and the room most suitable for the guest(s) is selected. If a request is too "big" for the room, then the call fails and the user is prompted to check the availability of rooms.
 
-The classes have basic validity checking, but it is by no means production code. It will prevent things like booking a room that doesn't exist or jamming 3 bags into a room with no storage.
+The classes have basic validity checking, but it is by no means production code. It will prevent things like booking a room that doesn't exist or jamming 3 bags into a room with no storage. Similarly anything that fails validation will generally return False or 0.
 
 ###	How would we extend your system if we had to add more rooms, more business logic constraints, more gnomes?
 
@@ -75,15 +77,19 @@ I decided not to use any. Not because some aren't useful, but that seemed an add
 
 Actual coding was probably in the 6-8 hour range. I ran into several just bizarre prolems with apache, php and git that derailed my work for a time, so I can't give any more accurate estimate.
 
+With another day to work on this I'd push down the read/write logic into the classes, to simulate how it would be done if this were talking to a database and to better keep the data abstraction. Plus have the validity checking return messages or perhaps use exceptions and a try/catch block at the top. I'd also likely use the mutex lock to handle case of two people making reservations at the same time. There's more testing to be done on the differnet reservation scenarios to maximize room utilization and total charges for the night.
+
 If I had unlimited time on this, or even a standard 2-3 week sprint, the final result would be implented differently.
 
 First I would use a database rather than json files to store the data, especially if this were going out into the real world. So I'd likely start with brainstorming the various data objects I would need and if those objects were persistent, develop their schema and relationships.
 
-Then I'd brainstoem the various user stories, or at least likely actions this system would provide in the API. That would get me a set of functionality that had to be exposed and handled. This would also refine the data model. With this I could add a specification for the API to the design document.
+Then I'd brainstoem the various user stories, or at least likely actions this system would provide in the API. That would get me a set of functionality that had to be exposed and handled. This would also refine the data model, perhaps suggesting classes. With this I could add a specification for the API to the design document.
 
 I'd ask if someone was available to review the design to make sure I didn't miss anything and that it made sense to other people. Once that was done I'd likely start roughing out the classes and initialization data. I'd build the sanity test "script" so I would know when I was done with the handlers for the various API calls.
 
-At this point the coding should go fairly smoothly, along with updates to the design documents. No plan is perfect so the API could be tweaked based on how the code was behaving and perhaps finding ways to unify the parameters so the whole API felt more consistent. There could also be tweaks to the schema like adding a foreign key or a mapping table to make a common search easier, for example.
+At this point the coding should go fairly smoothly, along with updates to the test plan. No plan is perfect so the API could be tweaked based on how the code was behaving and perhaps finding ways to unify the parameters so the whole API felt more consistent. There could also be tweaks to the schema like adding a foreign key or a mapping table to make a common search easier, for example. As each section of code was complete my unit tests would go into the overall testing platform.
+
+Ideally I'd be able to hand the API spec to another engineer to build an interface, be it for QA or the front-end team that was making the UI for the customer. This would be a good check against any assumptions I made and help refine the specification.
 
 ###	If you were going to implement a level of automated testing to prepare this for a production environment, how would you go about doing so?
 
