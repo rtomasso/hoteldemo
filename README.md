@@ -51,20 +51,31 @@ The classes have basic validity checking, but it is by no means production code.
 
 More rooms can be added by updating the rooms.json file.
 
+More gnomes are not needed unless there are more rooms or rooms can hold more guests. If there were multipe gnome crews, then there'd need to be gnome objects created and some logic to divide the cleaning duties made. Could be a simple round robin or crew 1 gets odd rooms and crew 2 gets even rooms or something else. If it was possible not to clean all the rooms in one shift, then some logic would be needed to know what room(s) would be unavailable to reserve for that night. That could change as new reservations come in. You could potentially find weird edge cases like a shared room becoming unavailable.
+
+More business logic could be fitted into the booking selection. There are dozens of potential rules that could be made for how and when to allow reseervations. Not to mention the ability to cancel a reservation. I don't know if you'd need a Rules class, but I could see extending the Room types to cover a lot of this. Perhaps some 2-bed rooms might only allow couples to book, or sharable rooms have to hold guests of the same gender. Some rooms might have different base charges, that would require no extra work as I've built this, just define the different rate. A room could have a minimum or maximum booking range. At the minimum there would be new functions to manage these rules. This would likely be easier with a database to narrow the initial room selection query.
+
+New business logic of any complexity would likely require more datapoints to support it. That's a redesign of the core classes and future schema.
+
 ###	What documentation, websites, papers, etc. did you consult for this assignment?
 
 I looked up examples of HTTP Status Codes for the responses, particularly the errors. 
 
+I did check a few RESTful systems for examples of responses and codes and parameter format.
+
+I did check the PHP and MYSQL manual whenever my system did something unexpected, which was far too often. Something kept breaking my MAMP install.
+
+By happy chance I caught an interview with one of the early pioneers of REST so got some insight how it's "supposed to work". It was a good reminder that GET makes no changes and is idempotent. And POST is used to create new things and should not create the same thing twice. After that I read the wikipedia article on REST.
 
 ###	What third-party libraries or other tools does your application use? How did you choose each library or framework you used?
 
-I decided not to use any. Not because some aren't useful, but that seemed an added complexity for setup and configuation. Plus I kept having problems with my MAMP installation and didn't want another thing to break while I developed this.
+I decided not to use any. Not because some aren't useful, but that seemed an added complexity for setup and configuation. Plus I kept having problems with my MAMP installation and didn't want another thing to break while I developed this. There may have been packages that could have easily handled this, but I personally found it more valuable to hand-roll this.
 
 ###	How long did you spend on this exercise? If you had unlimited time to spend on this, how would you spend it and how would you prioritize each item? 
 
 Actual coding was probably in the 6-8 hour range. I ran into several just bizarre prolems with apache, php and git that derailed my work for a time, so I can't give any more accurate estimate.
 
-If I had unlimited time on this, or even a standard 2-3 week sprint, the final result would be different.
+If I had unlimited time on this, or even a standard 2-3 week sprint, the final result would be implented differently.
 
 First I would use a database rather than json files to store the data, especially if this were going out into the real world. So I'd likely start with brainstorming the various data objects I would need and if those objects were persistent, develop their schema and relationships.
 
@@ -82,4 +93,6 @@ Create different rooms.json files with a corresponsing set of test actions to ma
 
 Write a whole bunch of negative tests.
 
-Pick a programming language with a REST client library and build up all sorts of requests and examine the response data in a programmatic way. There should be several places where "input==output" checks can be made.
+Pick a programming language with a REST client library and build up all sorts of requests and examine the response data in a programmatic way. There should be several places where "input==output" checks can be made. Not to mention systematic tests like keep having one guest reserve a shared room until it is full and make sure it is the correct number of iterations. Program could generate random data to test input validation. Validating the returned JSON data woudl be fairly automatic.
+
+With access to the number of rooms and their public traits, those could drive a program to build queries to test various bounds and known good and bad requests.
