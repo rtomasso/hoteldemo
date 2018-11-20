@@ -154,7 +154,7 @@ public function isRoomAvailable(int $room, string $night) { // do I need rest of
 	return FALSE;
 }
 
-// return true if such a reservation exists, false otherwise
+// Return true if such a reservation exists, false otherwise
 public function confirmReservation(array $res) { // could be reservation object
 	if ($res['room'] > $this->numRooms)
 		return FALSE;
@@ -182,7 +182,7 @@ public function computeVacancy() {
 	$this->vacancy['tmrw'] = $vac;
 }
 
-public function calculateBilling(string $night="tonight") {
+public function calculateBilling(string $night='tonight') {
 	$total = 0;
 	foreach ($this->roomNights[$night] as $rm) {
 		$total += $rm->totalCost();
@@ -190,6 +190,8 @@ public function calculateBilling(string $night="tonight") {
 	return $total;
 }
 
+
+// Check the cleaning schedule
 
 public function cleaningTime() {
 	return GnomeSquad::totalCleaningTime($this->roomNights['tonight']);

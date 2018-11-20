@@ -72,11 +72,13 @@ function process_gets($request) {
 		if ($room) {
 			$response['room'] = $room;
 			$response['message'] = "Room $room is available for $guests guests and $bags bags";
-			echo json_encode($response);
 		}
-		else
-			echo json_encode($_GET); // debug
-		return 1;
+		else {
+			http_response_code(404); // best simulator of unavailable resource
+			$response['message'] = "That reservation request is not available. Please try another.";
+		}
+		echo json_encode($response);
+		return;
 	}
 	elseif ($action == 'confirm') {
 		if (! Reservation::validate($_GET, ['room','name']) ) {
@@ -85,17 +87,18 @@ function process_gets($request) {
 			return 0;
 		} else {
 //			echo json_encode($_GET); // debugging
+//			return 0;
 		}
 		
 		$_GET['night'] = isset($_GET['night']) ? $_GET['night'] : 'tonight';
 		$inn = new Inn;
 		$conf = $inn->confirmReservation($_GET);
-		if (is_bool($conf)) {
+		if (is_bool($conf)) { // false
 			http_response_code(400); // 404?
 			$response['message'] = "No matching reservation found :(";
 //			echo json_encode($response);
 //			return 0;
-		} else {
+		} else { // object
 			$response['message'] = "Matching reservation found!";
 			$response['reservation'] = $conf; // optional?
 			$response['get'] = $_GET;
@@ -124,7 +127,7 @@ function process_posts($request) {
 	//var_dump($data);
 	if (empty($data)) {
 		echo json_encode(array("message" => "Inn reservations expect parameters of action (reserve). ".
-										"Reserve requires room, name, guests and bags and optional night.") );
+				"Reserve requires room, name, guests and bags and optional night.") );
 		return 1;
 	}
 	$action = isset($data['action']) ? $data['action'] : NULL;
