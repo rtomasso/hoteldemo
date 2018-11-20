@@ -85,9 +85,6 @@ function process_gets($request) {
 			$response['message'] = "Required parameters for request are room and guest name";
 			echo json_encode($response);
 			return 0;
-		} else {
-//			echo json_encode($_GET); // debugging
-//			return 0;
 		}
 		
 		$_GET['night'] = isset($_GET['night']) ? $_GET['night'] : 'tonight';
@@ -96,14 +93,9 @@ function process_gets($request) {
 		if (is_bool($conf)) { // false
 			http_response_code(400); // 404?
 			$response['message'] = "No matching reservation found :(";
-//			echo json_encode($response);
-//			return 0;
 		} else { // object
 			$response['message'] = "Matching reservation found!";
 			$response['reservation'] = $conf; // optional?
-			$response['get'] = $_GET;
-//			echo json_encode($response);
-//			return 0;
 		}
 	}
 	elseif ($action == 'cleaning') {
@@ -138,7 +130,7 @@ function process_posts($request) {
 		return 0;
 	}
 	else
-		$response = array("message" => "action sent was $action", "data" => $data);
+		$response = array("message" => "action sent was $action");
 
 	if ($action == "reserve") {
 		// validate input

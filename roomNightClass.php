@@ -31,6 +31,8 @@ include "roomClass.php";
  // This is the state of the room for a given night
  // Includes how occupied the room is
 class RoomNight extends Room {
+	// Where the data for all the rooms is stored
+	const DataFile = "data/roomnights.json";
 	public $night = '';
 	public $guests = 0;
 	public $bags = 0;

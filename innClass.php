@@ -43,7 +43,7 @@ class Inn {
 	protected $checkout = FALSE;
 	protected $mutex = FALSE;
 
-public function __construct(boolean $load = TRUE) {
+public function __construct($skip = NULL) {
 	$debug = 0;
 	$jsonData = file_get_contents(Room::DataFile);
 	if ($debug) var_dump($jsonData);
@@ -72,11 +72,11 @@ public function __construct(boolean $load = TRUE) {
 		$this->rooms[$n] = new Room($data);
 		// fill in default room night data
 		$data['night'] = 'tonight';
-		$this->roomNights["tonight"][$n] = new RoomNight($data);
+		$this->roomNights['tonight'][$n] = new RoomNight($data);
 		$data['night'] = 'tmrw';
-		$this->roomNights["tmrw"][$n]    = new RoomNight($data);
+		$this->roomNights['tmrw'][$n]    = new RoomNight($data);
 	}
-	if ($load) {
+	if (empty($skip)) {
 		$this->readReservations();
 		$this->readRoomNights();
 	}
@@ -85,10 +85,10 @@ public function __construct(boolean $load = TRUE) {
 // Just in case something goes wrong and need to start again
 // Also useful for testing
 public function clear () {
-	$this = new Inn(FALSE);
-	$this->vacancy = array('tonight' => TRUE, 'tmrw' => TRUE);
-	$this->saveReservations();
-	$this->saveRoomNights();
+	$cleared = new Inn(TRUE);
+	$cleared->vacancy = array('tonight' => TRUE, 'tmrw' => TRUE);
+	$cleared->saveReservations();
+	$cleared->saveRoomNights();
 }
 
 // Returns room number, or 0 if no room available for the reservation req
